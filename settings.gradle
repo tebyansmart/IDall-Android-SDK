@@ -1,0 +1,3 @@
+include ':IdallSDK'
+include ':app'
+rootProject.name = "IdallAndroidSDK"
