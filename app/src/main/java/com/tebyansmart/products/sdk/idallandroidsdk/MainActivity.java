@@ -5,10 +5,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.tebyansmart.products.sdk.idallsdk.IdallError;
-import com.tebyansmart.products.sdk.idallsdk.IdallResponse;
-import com.tebyansmart.products.sdk.idallsdk.ResponseListener;
+import com.tebyansmart.products.sdk.idallsdk.IdallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.IdallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.UserInfoListener;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
+import com.tebyansmart.products.sdk.idallsdk.AuthenticateListener;
 import com.tebyansmart.products.sdk.idallsdk.Idall;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallUserResponse;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,16 +20,48 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Idall idall = Idall.getInstance(this, getString(R.string.idall_app_id));
+        final Idall idall = Idall.getInstance()
+                .setApplicationId(getString(R.string.idall_app_id));
 
-        idall.authenticate(new ResponseListener() {
+        idall.authenticate(this, new AuthenticateListener() {
             @Override
-            public void onResponse(IdallResponse response) {
+            public void onResponse(IdallAuthResponse response) {
                 Toast.makeText(MainActivity.this, response.accessToken, Toast.LENGTH_SHORT).show();
+
+                idall.userInfo(response.accessToken, new UserInfoListener() {
+                    @Override
+                    public void onResponse(IdallUserResponse response) {
+                        Toast.makeText(MainActivity.this, response.name + "\n" + response.role + "\n" + response.sub, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(IdallUserInfoError error) {
+                        switch (error) {
+                            case UNKNOWN:
+
+                                break;
+                            case NULL_ACCESS_TOKEN:
+
+                                break;
+                            case INVALID_ACCESS_TOKEN:
+
+                                break;
+                            case USER_FETCH:
+
+                                break;
+                            case USER_PARSE:
+
+                                break;
+                            case IDALL_NOT_AUTHORIZED:
+
+                                break;
+                        }
+                    }
+                });
             }
 
             @Override
-            public void onError(IdallError error) {
+            public void onError(IdallAuthError error) {
                 switch (error) {
                     case STATE_MISMATCH:
 
@@ -38,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
 
                         break;
                     case UNKNOWN:
+
+                        break;
+                    case TOKEN_FETCH:
 
                         break;
                 }

@@ -1,6 +1,6 @@
-package com.tebyansmart.products.sdk.idallsdk;
+package com.tebyansmart.products.sdk.idallsdk.model;
 
-public class IdallResponse {
+public class IdallAuthResponse {
 
     public String idToken;
     public String accessToken;
@@ -8,7 +8,7 @@ public class IdallResponse {
     public String scope;
     public Long expireIn;
 
-    public IdallResponse(String idToken, String accessToken, String tokenType, String scope, Long expireIn) {
+    public IdallAuthResponse(String idToken, String accessToken, String tokenType, String scope, Long expireIn) {
         this.idToken = idToken;
         this.accessToken = accessToken;
         this.tokenType = tokenType;

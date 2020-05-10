@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,7 +31,7 @@ import java.util.UUID;
 public class IdallActivity extends AppCompatActivity {
 
     private SharedPreferences preferences;
-    private Idall idall;
+    private Idall idall = Idall.getInstance();
     private CustomTabsIntent customTabsIntent;
 
     @SuppressLint("WrongConstant")
@@ -44,11 +46,10 @@ public class IdallActivity extends AppCompatActivity {
         if (intent != null) {
             if (intent.hasExtra(IdallConfigs.APP_ID)) {
                 saveStringToPreferences(IdallConfigs.APP_ID, intent.getStringExtra(IdallConfigs.APP_ID));
-                initialIdallService();
                 try {
                     customTabsIntent.launchUrl(this, buildAuthorizeUrl(idall.getDiscoveryObject().getString("authorization_endpoint")));
                 } catch (JSONException e) {
-                    idall.getResponseListener().onError(IdallError.DISCOVERY_PARSE);
+                    idall.getAuthenticateListener().onError(IdallAuthError.DISCOVERY_PARSE);
                     e.printStackTrace();
                 }
                 finish();
@@ -59,17 +60,15 @@ public class IdallActivity extends AppCompatActivity {
                     intent.getData().getScheme().equals("idall") &&
                     intent.getData().getHost().equals(preferences.getString(IdallConfigs.APP_ID, null))) {
 
-                initialIdallService();
-
                 if (intent.getData().getQuery() != null) {
                     Uri uri = intent.getData();
                     if (uri.getQueryParameter("state").equals(preferences.getString(IdallConfigs.STATE, ""))) {
                         new GetToken().execute(uri.getQueryParameter("code"));
                     } else {
-                        idall.getResponseListener().onError(IdallError.STATE_MISMATCH);
+                        idall.getAuthenticateListener().onError(IdallAuthError.STATE_MISMATCH);
                     }
                 } else {
-                    idall.getResponseListener().onError(IdallError.UNKNOWN);
+                    idall.getAuthenticateListener().onError(IdallAuthError.UNKNOWN);
                 }
             }
         }
@@ -80,10 +79,6 @@ public class IdallActivity extends AppCompatActivity {
         customTabsIntent = builder.build();
         customTabsIntent.intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    }
-
-    private void initialIdallService() {
-        idall = Idall.getInstance(this, preferences.getString(IdallConfigs.APP_ID, null));
     }
 
     // Build Authorization Url to request Idall Server
@@ -179,21 +174,25 @@ public class IdallActivity extends AppCompatActivity {
             return result.toString();
         }
 
+        @SuppressLint("ApplySharedPref")
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
                 try {
                     JSONObject object = new JSONObject(result);
-                    idall.getResponseListener().onResponse(new IdallResponse(object.getString("id_token"),
+                    idall.isAuthorized = true;
+                    idall.getAuthenticateListener().onResponse(new IdallAuthResponse(object.getString("id_token"),
                             object.getString("access_token"),
                             object.getString("token_type"),
                             object.getString("scope"),
                             object.getLong("expires_in")));
+
+                    preferences.edit().putString("idall_token_data", object.toString()).commit();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             } else {
-                idall.getResponseListener().onError(IdallError.TOKEN_FETCH);
+                idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_FETCH);
             }
             finish();
         }

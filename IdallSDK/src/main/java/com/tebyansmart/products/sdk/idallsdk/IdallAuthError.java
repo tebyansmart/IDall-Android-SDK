@@ -1,6 +1,6 @@
 package com.tebyansmart.products.sdk.idallsdk;
 
-public enum IdallError {
+public enum IdallAuthError {
     STATE_MISMATCH,
     DISCOVERY_PARSE,
     DISCOVERY_FETCH,
