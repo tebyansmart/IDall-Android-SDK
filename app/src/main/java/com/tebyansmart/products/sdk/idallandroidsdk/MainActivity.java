@@ -5,11 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.tebyansmart.products.sdk.idallsdk.IdallAuthError;
-import com.tebyansmart.products.sdk.idallsdk.IdallUserInfoError;
-import com.tebyansmart.products.sdk.idallsdk.UserInfoListener;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.communication.external.UserInfoListener;
 import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
-import com.tebyansmart.products.sdk.idallsdk.AuthenticateListener;
+import com.tebyansmart.products.sdk.idallsdk.communication.external.AuthenticateListener;
 import com.tebyansmart.products.sdk.idallsdk.Idall;
 import com.tebyansmart.products.sdk.idallsdk.model.IdallUserResponse;
 

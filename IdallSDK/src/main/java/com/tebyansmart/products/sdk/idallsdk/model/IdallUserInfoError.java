@@ -1,4 +1,4 @@
-package com.tebyansmart.products.sdk.idallsdk;
+package com.tebyansmart.products.sdk.idallsdk.model;
 
 public enum IdallUserInfoError {
     NULL_ACCESS_TOKEN,
@@ -6,5 +6,6 @@ public enum IdallUserInfoError {
     IDALL_NOT_AUTHORIZED,
     USER_FETCH,
     USER_PARSE,
+    DISCOVERY,
     UNKNOWN
 }

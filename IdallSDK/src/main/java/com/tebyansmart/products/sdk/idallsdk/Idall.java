@@ -8,7 +8,13 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserResponse;
+import com.tebyansmart.products.sdk.idallsdk.communication.external.AuthenticateListener;
+import com.tebyansmart.products.sdk.idallsdk.communication.external.UserInfoListener;
+import com.tebyansmart.products.sdk.idallsdk.communication.internal.DiscoveryListener;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.network.IdallServices;
+import com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,19 +26,28 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * Idall main class to initialize Idall services.
+ * Use Idall authenticate method to authenticate user.
+ * Use userInfo method to get user information.
+ */
 public class Idall {
 
     @SuppressLint("StaticFieldLeak")
     private static Idall instance;
-
     private AuthenticateListener authenticateListener;
     private String appId = null;
-    private static JSONObject discoveryObject;
+    JSONObject discoveryObject;
     boolean isAuthorized = false;
 
     private Idall() {
     }
 
+    /**
+     * Initialize Idall Service
+     *
+     * @return Idall
+     */
     public static Idall getInstance() {
         if (instance == null) {
             instance = new Idall();
@@ -40,6 +55,13 @@ public class Idall {
         return instance;
     }
 
+    /**
+     * Authenticate user with browser flow
+     *
+     * @param context              Activity/Fragment {@link Context} to start {@link IdallActivity}
+     * @param authenticateListener {@link AuthenticateListener} to get response or error details
+     * @throws RuntimeException if applicationId or context not passed or null, also applicationId should not be empty
+     */
     public void authenticate(@NonNull Context context, @NonNull AuthenticateListener authenticateListener) {
         if (context == null) {
             throw new RuntimeException("Context needed by Idall service");
@@ -50,10 +72,17 @@ public class Idall {
         else {
             this.authenticateListener = authenticateListener;
             // Execute Discovery Async task
-            new GetDiscoveryInfo(context).execute();
+            new IdallServices.GetDiscoveryInfo(context, discoveryListener).execute();
         }
     }
 
+    /**
+     * Get User Info based on your accessibility
+     *
+     * @param accessToken      accessToken that fetched with authenticate method response {@link com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse}
+     * @param userInfoListener to get response or error details
+     * @throws RuntimeException if userInfoListener is null
+     */
     public void userInfo(@NonNull String accessToken, @NonNull UserInfoListener userInfoListener) {
         if (accessToken == null) {
             userInfoListener.onError(IdallUserInfoError.NULL_ACCESS_TOKEN);
@@ -63,141 +92,15 @@ public class Idall {
             throw new RuntimeException("userInfoListener is needed to communicate with Idall services");
         } else {
             // Execute GetUser Async task
-            if (isAuthorized)
-                new GetUserInfo(userInfoListener).execute(accessToken);
-            else
+            if (isAuthorized) {
+                try {
+                    new IdallServices.GetUserInfo(discoveryObject.getString("userinfo_endpoint"), userInfoListener).execute(accessToken);
+                } catch (JSONException e) {
+                    userInfoListener.onError(IdallUserInfoError.DISCOVERY);
+                    e.printStackTrace();
+                }
+            } else {
                 userInfoListener.onError(IdallUserInfoError.IDALL_NOT_AUTHORIZED);
-        }
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class GetDiscoveryInfo extends AsyncTask<String, String, String> {
-        private HttpURLConnection urlConnection;
-        private Context context;
-
-        public GetDiscoveryInfo(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        protected String doInBackground(String... args) {
-            StringBuilder result = new StringBuilder();
-
-            try {
-                URL url = new URL(IdallConfigs.DISCOVERY_URL);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setReadTimeout(5000);
-                urlConnection.setConnectTimeout(10000);
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setDoInput(true);
-                urlConnection.setRequestProperty("Content-Type", "application/json");
-
-                urlConnection.connect();
-
-                if (urlConnection.getResponseCode() == 200) {
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        result.append(line);
-                    }
-                } else {
-                    return null;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            } finally {
-                urlConnection.disconnect();
-            }
-            return result.toString();
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null) {
-                try {
-                    discoveryObject = new JSONObject(result);
-                    Intent intent = new Intent(context, IdallActivity.class);
-                    intent.putExtra(IdallConfigs.APP_ID, appId);
-                    context.startActivity(intent);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    authenticateListener.onError(IdallAuthError.DISCOVERY_PARSE);
-                }
-            } else {
-                authenticateListener.onError(IdallAuthError.DISCOVERY_FETCH);
-            }
-        }
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class GetUserInfo extends AsyncTask<String, String, String> {
-        private HttpURLConnection urlConnection;
-        private UserInfoListener userInfoListener;
-
-        public GetUserInfo(UserInfoListener userInfoListener) {
-            this.userInfoListener = userInfoListener;
-        }
-
-        @Override
-        protected String doInBackground(String... args) {
-            StringBuilder result = new StringBuilder();
-
-            try {
-                URL url = new URL(discoveryObject.getString("userinfo_endpoint"));
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setReadTimeout(10000);
-                urlConnection.setConnectTimeout(10000);
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setDoInput(true);
-                urlConnection.addRequestProperty("Authorization", "Bearer " + args[0]);
-                urlConnection.setRequestProperty("Content-Type", "application/json");
-
-                urlConnection.connect();
-
-                if (urlConnection.getResponseCode() == 200) {
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        result.append(line);
-                    }
-                } else {
-                    return null;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            } finally {
-                urlConnection.disconnect();
-            }
-            return result.toString();
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null) {
-                try {
-                    JSONObject userObject = new JSONObject(result);
-                    IdallUserResponse user = new IdallUserResponse();
-                    if (userObject.has("sub"))
-                        user.sub = userObject.getString("sub");
-                    if (userObject.has("name"))
-                        user.sub = userObject.getString("name");
-                    if (userObject.has("role"))
-                        user.sub = userObject.getString("role");
-                    userInfoListener.onResponse(user);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    userInfoListener.onError(IdallUserInfoError.USER_PARSE);
-                }
-            } else {
-                userInfoListener.onError(IdallUserInfoError.USER_FETCH);
             }
         }
     }
@@ -210,6 +113,12 @@ public class Idall {
         return appId;
     }
 
+    /**
+     * Set your applicationId
+     *
+     * @param appId your Idall applicationId
+     * @return {@link Idall}
+     */
     public Idall setApplicationId(String appId) {
         if (appId == null || TextUtils.isEmpty(appId)) {
             throw new RuntimeException("appID needed by Idall service");
@@ -218,6 +127,21 @@ public class Idall {
             return instance;
         }
     }
+
+    private DiscoveryListener discoveryListener = new DiscoveryListener() {
+        @Override
+        public void onResponse(Context context, JSONObject discovery) {
+            discoveryObject = discovery;
+            Intent intent = new Intent(context, IdallActivity.class);
+            intent.putExtra(IdallConfigs.APP_ID, instance.appId);
+            context.startActivity(intent);
+        }
+
+        @Override
+        public void onError(Throwable error) {
+            authenticateListener.onError(IdallAuthError.DISCOVERY_FETCH);
+        }
+    };
 
     AuthenticateListener getAuthenticateListener() {
         return authenticateListener;

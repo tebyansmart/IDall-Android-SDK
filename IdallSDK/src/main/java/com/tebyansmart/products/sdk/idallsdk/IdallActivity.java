@@ -1,34 +1,30 @@
 package com.tebyansmart.products.sdk.idallsdk;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabsIntent;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabsIntent;
+
+import com.tebyansmart.products.sdk.idallsdk.communication.internal.TokenListener;
+import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.network.IdallServices;
+import com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs;
+import com.tebyansmart.products.sdk.idallsdk.utils.ModelUtils;
+import com.tebyansmart.products.sdk.idallsdk.utils.UrlUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 
-public class IdallActivity extends AppCompatActivity {
+import static com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs.TOKEN_ENDPOINT_KEY;
+
+public class IdallActivity extends AppCompatActivity implements TokenListener {
 
     private SharedPreferences preferences;
     private Idall idall = Idall.getInstance();
@@ -47,7 +43,8 @@ public class IdallActivity extends AppCompatActivity {
             if (intent.hasExtra(IdallConfigs.APP_ID)) {
                 saveStringToPreferences(IdallConfigs.APP_ID, intent.getStringExtra(IdallConfigs.APP_ID));
                 try {
-                    customTabsIntent.launchUrl(this, buildAuthorizeUrl(idall.getDiscoveryObject().getString("authorization_endpoint")));
+                    customTabsIntent.launchUrl(this, UrlUtils.buildAuthorizeUrl(idall.getDiscoveryObject().getString("authorization_endpoint"),
+                            preferences.getString(IdallConfigs.APP_ID, null), generateAndSaveState()));
                 } catch (JSONException e) {
                     idall.getAuthenticateListener().onError(IdallAuthError.DISCOVERY_PARSE);
                     e.printStackTrace();
@@ -63,7 +60,13 @@ public class IdallActivity extends AppCompatActivity {
                 if (intent.getData().getQuery() != null) {
                     Uri uri = intent.getData();
                     if (uri.getQueryParameter("state").equals(preferences.getString(IdallConfigs.STATE, ""))) {
-                        new GetToken().execute(uri.getQueryParameter("code"));
+                        try {
+                            new IdallServices.GetToken(this).execute(idall.getDiscoveryObject().getString(TOKEN_ENDPOINT_KEY),
+                                    uri.getQueryParameter("code"),
+                                    preferences.getString(IdallConfigs.APP_ID, null));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         idall.getAuthenticateListener().onError(IdallAuthError.STATE_MISMATCH);
                     }
@@ -81,34 +84,6 @@ public class IdallActivity extends AppCompatActivity {
         customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     }
 
-    // Build Authorization Url to request Idall Server
-    private Uri buildAuthorizeUrl(String authorizeUrl) {
-        Uri discoveryUri = Uri.parse(authorizeUrl);
-        Uri.Builder uriBuilder = new Uri.Builder().scheme(discoveryUri.getScheme())
-                .authority(discoveryUri.getHost())
-                .appendQueryParameter("response_type", "code")
-                .appendQueryParameter("client_id", preferences.getString(IdallConfigs.APP_ID, null))
-                .appendQueryParameter("state", generateAndSaveState())
-                .appendQueryParameter("redirect_uri", IdallConfigs.SCHEME + "://" + preferences.getString(IdallConfigs.APP_ID, null))
-                .appendQueryParameter("scope", "openid profile email");
-
-        for (int i = 0; i < discoveryUri.getPathSegments().size(); i++) {
-            uriBuilder.appendPath(discoveryUri.getPathSegments().get(i));
-        }
-        return uriBuilder.build();
-    }
-
-    private URL buildTokenUrl(String tokenUrl, String code) throws MalformedURLException {
-        Uri discoveryUri = Uri.parse(tokenUrl);
-        Uri.Builder uriBuilder = new Uri.Builder().scheme(discoveryUri.getScheme())
-                .authority(discoveryUri.getHost());
-
-        for (int i = 0; i < discoveryUri.getPathSegments().size(); i++) {
-            uriBuilder.appendPath(discoveryUri.getPathSegments().get(i));
-        }
-        return new URL(uriBuilder.build().toString());
-    }
-
     private String generateAndSaveState() {
         saveStringToPreferences(IdallConfigs.STATE, UUID.randomUUID().toString());
         return preferences.getString(IdallConfigs.STATE, null);
@@ -119,82 +94,23 @@ public class IdallActivity extends AppCompatActivity {
         preferences.edit().putString(key, value).commit();
     }
 
-    @SuppressLint("StaticFieldLeak")
-    private class GetToken extends AsyncTask<String, String, String> {
-        private HttpURLConnection urlConnection;
-
-        @Override
-        protected String doInBackground(String... args) {
-            StringBuilder result = new StringBuilder();
-
-            try {
-                URL url = buildTokenUrl(idall.getDiscoveryObject().getString("token_endpoint"), args[0]);
-
-                Map<String, Object> params = new LinkedHashMap<>();
-                params.put("grant_type", "authorization_code");
-                params.put("code", args[0]);
-                params.put("redirect_uri", IdallConfigs.SCHEME + "://" + preferences.getString(IdallConfigs.APP_ID, null));
-                params.put("client_id", preferences.getString(IdallConfigs.APP_ID, null));
-
-                StringBuilder postData = new StringBuilder();
-                for (Map.Entry<String, Object> param : params.entrySet()) {
-                    if (postData.length() != 0) postData.append('&');
-                    postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
-                    postData.append('=');
-                    postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
-                }
-                byte[] postDataBytes = postData.toString().getBytes("UTF-8");
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setReadTimeout(10000);
-                urlConnection.setConnectTimeout(10000);
-                urlConnection.setRequestMethod("POST");
-                urlConnection.setDoInput(true);
-                urlConnection.getOutputStream().write(postDataBytes);
-                urlConnection.connect();
-
-                if (urlConnection.getResponseCode() == 200) {
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        result.append(line);
-                    }
-                } else {
-                    return null;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            } finally {
-                urlConnection.disconnect();
-            }
-            return result.toString();
+    @SuppressLint("ApplySharedPref")
+    @Override
+    public void onResponse(JSONObject auth) {
+        try {
+            idall.isAuthorized = true;
+            idall.getAuthenticateListener().onResponse(ModelUtils.createIdallAuthResponse(auth));
+            preferences.edit().putString("idall_token_data", auth.toString()).commit();
+        } catch (JSONException e) {
+            idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_PARSE);
+            e.printStackTrace();
         }
 
-        @SuppressLint("ApplySharedPref")
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null) {
-                try {
-                    JSONObject object = new JSONObject(result);
-                    idall.isAuthorized = true;
-                    idall.getAuthenticateListener().onResponse(new IdallAuthResponse(object.getString("id_token"),
-                            object.getString("access_token"),
-                            object.getString("token_type"),
-                            object.getString("scope"),
-                            object.getLong("expires_in")));
+        finish();
+    }
 
-                    preferences.edit().putString("idall_token_data", object.toString()).commit();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_FETCH);
-            }
-            finish();
-        }
+    @Override
+    public void onError(Throwable error) {
+        idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_FETCH);
     }
 }
