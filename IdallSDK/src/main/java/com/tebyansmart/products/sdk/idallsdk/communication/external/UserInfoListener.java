@@ -1,10 +1,10 @@
 package com.tebyansmart.products.sdk.idallsdk.communication.external;
 
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserInfoError;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserResponse;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallUserResponse;
 
 public interface UserInfoListener {
-    void onResponse(IdallUserResponse response);
+    void onResponse(IDallUserResponse response);
 
-    void onError(IdallUserInfoError error);
+    void onError(IDallUserInfoError error);
 }

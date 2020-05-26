@@ -11,9 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.browser.customtabs.CustomTabsIntent;
 
 import com.tebyansmart.products.sdk.idallsdk.communication.internal.TokenListener;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
-import com.tebyansmart.products.sdk.idallsdk.network.IdallServices;
-import com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.network.IDallServices;
+import com.tebyansmart.products.sdk.idallsdk.utils.IDallConfigs;
 import com.tebyansmart.products.sdk.idallsdk.utils.ModelUtils;
 import com.tebyansmart.products.sdk.idallsdk.utils.UrlUtils;
 
@@ -22,12 +22,12 @@ import org.json.JSONObject;
 
 import java.util.UUID;
 
-import static com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs.TOKEN_ENDPOINT_KEY;
+import static com.tebyansmart.products.sdk.idallsdk.utils.IDallConfigs.TOKEN_ENDPOINT_KEY;
 
-public class IdallActivity extends AppCompatActivity implements TokenListener {
+public class IDallActivity extends AppCompatActivity implements TokenListener {
 
     private SharedPreferences preferences;
-    private Idall idall = Idall.getInstance();
+    private IDall idall = IDall.getInstance();
     private CustomTabsIntent customTabsIntent;
 
     @SuppressLint("WrongConstant")
@@ -40,13 +40,13 @@ public class IdallActivity extends AppCompatActivity implements TokenListener {
 
         Intent intent = getIntent();
         if (intent != null) {
-            if (intent.hasExtra(IdallConfigs.APP_ID)) {
-                saveStringToPreferences(IdallConfigs.APP_ID, intent.getStringExtra(IdallConfigs.APP_ID));
+            if (intent.hasExtra(IDallConfigs.APP_ID)) {
+                saveStringToPreferences(IDallConfigs.APP_ID, intent.getStringExtra(IDallConfigs.APP_ID));
                 try {
                     customTabsIntent.launchUrl(this, UrlUtils.buildAuthorizeUrl(idall.getDiscoveryObject().getString("authorization_endpoint"),
-                            preferences.getString(IdallConfigs.APP_ID, null), generateAndSaveState()));
+                            preferences.getString(IDallConfigs.APP_ID, null), generateAndSaveState()));
                 } catch (JSONException e) {
-                    idall.getAuthenticateListener().onError(IdallAuthError.DISCOVERY_PARSE);
+                    idall.getAuthenticateListener().onError(IDallAuthError.DISCOVERY_PARSE);
                     e.printStackTrace();
                 }
                 finish();
@@ -55,23 +55,23 @@ public class IdallActivity extends AppCompatActivity implements TokenListener {
                     intent.getData().getScheme() != null &&
                     intent.getData().getHost() != null &&
                     intent.getData().getScheme().equals("idall") &&
-                    intent.getData().getHost().equals(preferences.getString(IdallConfigs.APP_ID, null))) {
+                    intent.getData().getHost().equals(preferences.getString(IDallConfigs.APP_ID, null))) {
 
                 if (intent.getData().getQuery() != null) {
                     Uri uri = intent.getData();
-                    if (uri.getQueryParameter("state").equals(preferences.getString(IdallConfigs.STATE, ""))) {
+                    if (uri.getQueryParameter("state").equals(preferences.getString(IDallConfigs.STATE, ""))) {
                         try {
-                            new IdallServices.GetToken(this).execute(idall.getDiscoveryObject().getString(TOKEN_ENDPOINT_KEY),
+                            new IDallServices.GetToken(this).execute(idall.getDiscoveryObject().getString(TOKEN_ENDPOINT_KEY),
                                     uri.getQueryParameter("code"),
-                                    preferences.getString(IdallConfigs.APP_ID, null));
+                                    preferences.getString(IDallConfigs.APP_ID, null));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     } else {
-                        idall.getAuthenticateListener().onError(IdallAuthError.STATE_MISMATCH);
+                        idall.getAuthenticateListener().onError(IDallAuthError.STATE_MISMATCH);
                     }
                 } else {
-                    idall.getAuthenticateListener().onError(IdallAuthError.UNKNOWN);
+                    idall.getAuthenticateListener().onError(IDallAuthError.UNKNOWN);
                 }
             }
         }
@@ -85,8 +85,8 @@ public class IdallActivity extends AppCompatActivity implements TokenListener {
     }
 
     private String generateAndSaveState() {
-        saveStringToPreferences(IdallConfigs.STATE, UUID.randomUUID().toString());
-        return preferences.getString(IdallConfigs.STATE, null);
+        saveStringToPreferences(IDallConfigs.STATE, UUID.randomUUID().toString());
+        return preferences.getString(IDallConfigs.STATE, null);
     }
 
     @SuppressLint("ApplySharedPref")
@@ -99,10 +99,10 @@ public class IdallActivity extends AppCompatActivity implements TokenListener {
     public void onResponse(JSONObject auth) {
         try {
             idall.isAuthorized = true;
-            idall.getAuthenticateListener().onResponse(ModelUtils.createIdallAuthResponse(auth));
+            idall.getAuthenticateListener().onResponse(ModelUtils.createIDallAuthResponse(auth));
             preferences.edit().putString("idall_token_data", auth.toString()).commit();
         } catch (JSONException e) {
-            idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_PARSE);
+            idall.getAuthenticateListener().onError(IDallAuthError.TOKEN_PARSE);
             e.printStackTrace();
         }
 
@@ -111,6 +111,6 @@ public class IdallActivity extends AppCompatActivity implements TokenListener {
 
     @Override
     public void onError(Throwable error) {
-        idall.getAuthenticateListener().onError(IdallAuthError.TOKEN_FETCH);
+        idall.getAuthenticateListener().onError(IDallAuthError.TOKEN_FETCH);
     }
 }

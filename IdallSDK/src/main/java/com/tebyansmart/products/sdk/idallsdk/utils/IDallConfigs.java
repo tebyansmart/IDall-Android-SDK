@@ -1,6 +1,6 @@
 package com.tebyansmart.products.sdk.idallsdk.utils;
 
-public class IdallConfigs {
+public class IDallConfigs {
     private static final String BASE_URL = "https://accounts.idall.pro/";
     public static final String DISCOVERY_URL = BASE_URL + ".well-known/openid-configuration";
     public static final String STATE = "idall_state";

@@ -7,9 +7,9 @@ import android.os.AsyncTask;
 import com.tebyansmart.products.sdk.idallsdk.communication.external.UserInfoListener;
 import com.tebyansmart.products.sdk.idallsdk.communication.internal.DiscoveryListener;
 import com.tebyansmart.products.sdk.idallsdk.communication.internal.TokenListener;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserInfoError;
-import com.tebyansmart.products.sdk.idallsdk.utils.IdallConfigs;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.utils.IDallConfigs;
 import com.tebyansmart.products.sdk.idallsdk.utils.ModelUtils;
 import com.tebyansmart.products.sdk.idallsdk.utils.UrlUtils;
 
@@ -26,7 +26,7 @@ import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class IdallServices {
+public class IDallServices {
     public static class GetUserInfo extends AsyncTask<String, String, String> {
         private HttpURLConnection urlConnection;
         private UserInfoListener userInfoListener;
@@ -78,13 +78,13 @@ public class IdallServices {
         protected void onPostExecute(String result) {
             if (result != null) {
                 try {
-                    userInfoListener.onResponse(ModelUtils.createIdallUserResponse(new JSONObject(result)));
+                    userInfoListener.onResponse(ModelUtils.createIDallUserResponse(new JSONObject(result)));
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    userInfoListener.onError(IdallUserInfoError.USER_PARSE);
+                    userInfoListener.onError(IDallUserInfoError.USER_PARSE);
                 }
             } else {
-                userInfoListener.onError(IdallUserInfoError.USER_FETCH);
+                userInfoListener.onError(IDallUserInfoError.USER_FETCH);
             }
         }
     }
@@ -105,7 +105,7 @@ public class IdallServices {
             StringBuilder result = new StringBuilder();
 
             try {
-                URL url = new URL(IdallConfigs.DISCOVERY_URL);
+                URL url = new URL(IDallConfigs.DISCOVERY_URL);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setReadTimeout(10000);
                 urlConnection.setConnectTimeout(10000);
@@ -170,7 +170,7 @@ public class IdallServices {
                 Map<String, Object> params = new LinkedHashMap<>();
                 params.put("grant_type", "authorization_code");
                 params.put("code", args[1]);
-                params.put("redirect_uri", IdallConfigs.SCHEME + "://" + args[2]);
+                params.put("redirect_uri", IDallConfigs.SCHEME + "://" + args[2]);
                 params.put("client_id", args[2]);
 
                 StringBuilder postData = new StringBuilder();
@@ -218,11 +218,11 @@ public class IdallServices {
                 try {
                     tokenListener.onResponse(new JSONObject(result));
                 } catch (JSONException e) {
-                    tokenListener.onError(new Throwable(IdallAuthError.TOKEN_PARSE.name()));
+                    tokenListener.onError(new Throwable(IDallAuthError.TOKEN_PARSE.name()));
                     e.printStackTrace();
                 }
             } else {
-                tokenListener.onError(new Throwable(IdallAuthError.TOKEN_FETCH.name()));
+                tokenListener.onError(new Throwable(IDallAuthError.TOKEN_FETCH.name()));
             }
         }
     }

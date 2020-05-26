@@ -1,17 +1,17 @@
 package com.tebyansmart.products.sdk.idallandroidsdk;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserInfoError;
-import com.tebyansmart.products.sdk.idallsdk.communication.external.UserInfoListener;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.tebyansmart.products.sdk.idallsdk.IDall;
 import com.tebyansmart.products.sdk.idallsdk.communication.external.AuthenticateListener;
-import com.tebyansmart.products.sdk.idallsdk.Idall;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallUserResponse;
+import com.tebyansmart.products.sdk.idallsdk.communication.external.UserInfoListener;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthResponse;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallUserInfoError;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallUserResponse;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,22 +20,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final Idall idall = Idall.getInstance()
+        final IDall idall = IDall.getInstance()
                 .setApplicationId(getString(R.string.idall_app_id));
 
         idall.authenticate(this, new AuthenticateListener() {
             @Override
-            public void onResponse(IdallAuthResponse response) {
+            public void onResponse(IDallAuthResponse response) {
                 Toast.makeText(MainActivity.this, response.accessToken, Toast.LENGTH_SHORT).show();
 
                 idall.userInfo(response.accessToken, new UserInfoListener() {
                     @Override
-                    public void onResponse(IdallUserResponse response) {
-                        Toast.makeText(MainActivity.this, response.name + "\n" + response.role + "\n" + response.sub, Toast.LENGTH_SHORT).show();
+                    public void onResponse(IDallUserResponse response) {
+                        Toast.makeText(MainActivity.this, response.name + "\n" + response.phone_number + "\n" + response.sub, Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
-                    public void onError(IdallUserInfoError error) {
+                    public void onError(IDallUserInfoError error) {
                         switch (error) {
                             case UNKNOWN:
 
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(IdallAuthError error) {
+            public void onError(IDallAuthError error) {
                 switch (error) {
                     case STATE_MISMATCH:
 

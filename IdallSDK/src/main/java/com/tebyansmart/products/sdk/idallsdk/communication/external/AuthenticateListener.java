@@ -1,10 +1,10 @@
 package com.tebyansmart.products.sdk.idallsdk.communication.external;
 
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthError;
-import com.tebyansmart.products.sdk.idallsdk.model.IdallAuthResponse;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthError;
+import com.tebyansmart.products.sdk.idallsdk.model.IDallAuthResponse;
 
 public interface AuthenticateListener {
-    void onResponse(IdallAuthResponse response);
+    void onResponse(IDallAuthResponse response);
 
-    void onError(IdallAuthError error);
+    void onError(IDallAuthError error);
 }

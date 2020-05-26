@@ -7,7 +7,7 @@ import java.net.URL;
 
 public class UrlUtils {
 
-    // Build Authorization Url to request Idall Server
+    // Build Authorization Url to request IDall Server
     public static Uri buildAuthorizeUrl(String authorizeUrl, String appId,String state) {
         Uri discoveryUri = Uri.parse(authorizeUrl);
         Uri.Builder uriBuilder = new Uri.Builder().scheme(discoveryUri.getScheme())
@@ -15,8 +15,8 @@ public class UrlUtils {
                 .appendQueryParameter("response_type", "code")
                 .appendQueryParameter("client_id", appId)
                 .appendQueryParameter("state", state)
-                .appendQueryParameter("redirect_uri", IdallConfigs.SCHEME + "://" + appId)
-                .appendQueryParameter("scope", "openid profile email");
+                .appendQueryParameter("redirect_uri", IDallConfigs.SCHEME + "://" + appId)
+                .appendQueryParameter("scope", "openid profile phone");
 
         for (int i = 0; i < discoveryUri.getPathSegments().size(); i++) {
             uriBuilder.appendPath(discoveryUri.getPathSegments().get(i));

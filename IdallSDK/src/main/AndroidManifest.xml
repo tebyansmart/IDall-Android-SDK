@@ -3,7 +3,7 @@
     package="com.tebyansmart.products.sdk.idallsdk">
 
     <application>
-        <activity android:name=".IdallActivity"></activity>
+        <activity android:name=".IDallActivity"></activity>
     </application>
 
 </manifest>

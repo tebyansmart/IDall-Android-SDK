@@ -1,6 +1,6 @@
 package com.tebyansmart.products.sdk.idallsdk.model;
 
-public enum IdallAuthError {
+public enum IDallAuthError {
     STATE_MISMATCH,
     DISCOVERY_PARSE,
     TOKEN_PARSE,

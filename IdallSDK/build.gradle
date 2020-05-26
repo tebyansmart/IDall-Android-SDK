@@ -1,4 +1,11 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+project.ext.set("VERSION_NAME", properties.getProperty('VERSION_NAME'))
 
 android {
     compileSdkVersion 29
@@ -27,3 +34,133 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.browser:browser:1.2.0'
 }
+
+ext {
+    bintrayRepo = 'IDall'
+    bintrayName = 'IDallSDK'
+
+    publishedGroupId = 'com.tebyansmart.products.sdk'
+    libraryName = 'IDallSDK'
+    artifact = 'IDallSDK'
+
+    libraryDescription = 'IDall Android SDK'
+
+    libraryVersion = '1.0.0'
+
+    siteUrl = 'https://github.com/tebyansmart/IDall-Android-SDK' // Replace by your url
+    gitUrl = 'https://github.com/tebyansmart/IDall-Android-SDK.git' // Replace by your url
+    githubRepository= 'tebyansmart/IDall-Android-SDK' // Replace by your url
+
+    developerId = 'tebyansmart'
+    developerName = 'Ali Khoshraftar'
+    developerEmail = 'dev@tebyansmart.com'
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+//ext {
+//    bintrayRepo = 'IDall'
+//    bintrayName = 'com.tebyansmart.products.sdk'
+//    publishedGroupId = 'com.tebyansmart.products.sdk'
+//    libraryName = 'iDall-SDK'
+//    artifact = 'idall-sdk'
+//    libraryDescription = 'IDall Android SDK'
+//    libraryVersion = '1.0.0'
+//    developerId = 'tebyansmart'
+//    developerName = 'Ali Khoshraftar'
+//    developerEmail = 'dev@tebyansmart.com'
+//    licenseName = 'The Apache Software License, Version 2.0'
+//    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//    allLicenses = ["Apache-2.0"]
+//}
+
+//group = publishedGroupId
+//version = libraryVersion
+
+//install {
+//    repositories.mavenInstaller {
+//        // This generates POM.xml with proper parameters
+//        pom.project {
+//            packaging 'aar'
+//            groupId publishedGroupId
+//            artifactId artifact
+//
+//            name libraryName
+//            description libraryDescription
+//            // Set your license
+//            licenses {
+//                license {
+//                    name licenseName
+//                    url licenseUrl
+//                }
+//            }
+//            developers {
+//                developer {
+//                    id developerId
+//                    name developerName
+//                    email developerEmail
+//                }
+//            }
+////            scm {
+////                connection gitUrl
+////                developerConnection gitUrl
+////                url siteUrl
+////            }
+//        }
+//    }
+//}
+//
+//bintray {
+//    user = properties.getProperty("bintray.user")
+//    key = properties.getProperty("bintray.apikey")
+//    configurations = ['archives']
+//    pkg {
+//        repo = bintrayRepo
+//        name = bintrayName
+//        desc = libraryDescription
+//        licenses = allLicenses
+//        dryRun = false
+//        publish = true
+//        override = false
+//        publicDownloadNumbers = true
+//        version {
+//            desc = libraryDescription
+//        }
+//        repo = bintrayRepo
+//        name = bintrayName
+//        userOrg = properties.getProperty('USERORG')
+////        licenses = allLicenses
+//////        vcsUrl = 'https://github.com/bintray/gradle-bintray-plugin.git'
+////        version {
+////            name = properties.getProperty('VERSION_NAME')
+////            desc = properties.getProperty('VERSION_DESC')
+//////            vcsTag = '0.1'
+//////            attributes = ['gradle-plugin': 'com.use.less:com.use.less.gradle:gradle-useless-plugin']
+////        }
+//    }
+//}
+
+//task androidJavadocs(type: Javadoc) {
+//    source = android.sourceSets.main.java.sourceFiles
+//    classpath = files(android.bootClasspath)
+//    failOnError false
+//}
+//
+//task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+//    classifier = 'javadoc'
+//    from androidJavadocs.destinationDir
+//}
+//
+//task androidSourcesJar(type: Jar) {
+//    classifier = 'sources'
+//    from android.sourceSets.main.java.sourceFiles
+//}
+//
+//artifacts {
+//    archives androidSourcesJar
+//    archives androidJavadocsJar
+//}
+
+apply from: 'https://raw.githubusercontent.com/tntkhang/library-to-bintray/master/install.gradle'
+apply from: 'https://raw.githubusercontent.com/tntkhang/library-to-bintray/master/bintray.gradle'
