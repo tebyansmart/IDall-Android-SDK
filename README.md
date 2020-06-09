@@ -11,7 +11,7 @@ implementation 'com.tebyansmart.products.sdk:IDallSDK:1.0.0.1'
 ```
 #### 2) Add following values to your project's string.xml file :
 ```xml
-    <string name="idall_app_id">co-bodyguard-android-app</string>
+    <string name="idall_app_id">YOUR_CLIENT_ID</string>
     <string name="idall_login_protocol_scheme">idall</string>
 ```
 #### 3) Add the following lines in your project's Manifest.xml :
